@@ -3,6 +3,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import core
 import datasets
+import os
 from table_quality import inspect_csv
 class Handler(BaseHTTPRequestHandler):
     def log_message(self,*args): pass
@@ -16,6 +17,11 @@ class Handler(BaseHTTPRequestHandler):
         if not self.allowed():return self.respond(403,{'error':'Local access only.'})
         route=urllib.parse.urlparse(self.path).path
         try:
+            if route=='/api/capabilities':
+                base=os.getenv('RECORD_DESK_BASE_URL','https://api.groq.com/openai/v1').rstrip('/')
+                local=urllib.parse.urlparse(base).hostname in ('127.0.0.1','localhost','::1')
+                configured=local or bool(os.getenv('GROQ_API_KEY') if base=='https://api.groq.com/openai/v1' else os.getenv('RECORD_DESK_API_KEY'))
+                return self.respond(200,dict(provider_configured=configured,ocr_ready=(core.STATE/'ocr').is_file(),model=core.MODEL))
             if route.startswith('/api/dataset-csv/'):
                 return self.respond(200,datasets.export_csv(route.rsplit('/',1)[1]).encode(),'text/csv; charset=utf-8')
             if route=='/api/datasets':return self.respond(200,datasets.listing())

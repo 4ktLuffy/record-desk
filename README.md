@@ -45,7 +45,7 @@ CSV input is UTF-8 and comma-separated, with up to 2 MB, 10,000 data records, an
 
 ## Optional document processing
 
-The CSV workflow runs locally without a provider. Receipt extraction and natural-language questions use Groq's OpenAI-compatible API and require `GROQ_API_KEY` in the process environment. `EVAL_MODEL_NAME` optionally selects a model; the default is `openai/gpt-oss-20b`. Account limits and provider charges may apply. Extraction sends document text to Groq. Questions send the question and planning instructions. Provider-generated fields require human review before use in totals; extraction can be incorrect.
+The CSV workflow runs locally without a provider. Receipt extraction and natural-language questions use Groq's OpenAI-compatible API and require `GROQ_API_KEY` in the process environment. `EVAL_MODEL_NAME` optionally selects a model; the default is `openai/gpt-oss-20b`. Account limits and provider charges may apply. Extraction sends document text to the configured provider (Groq by default). Questions send the question and planning instructions. Provider-generated fields require human review before use in totals; extraction can be incorrect.
 
 OCR and PDF splitting currently require macOS and Swift developer tools. On macOS, `./start.sh` builds the OCR helper before starting. CSV features and manual document review do not require Swift. Portable OCR is future work. Set `RECORD_DESK_IMPORT` for optional local folder import; uploading individual supported files also works. `.env` files are not automatically loaded.
 
@@ -83,3 +83,19 @@ Configurable field rules, service-work reconciliation, approved type conversions
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Model comparison
+
+The start screen separates spreadsheet comparison from document review and shows whether provider credentials and local OCR are configured. It never exposes keys to the browser.
+
+Groq is the default. Set `EVAL_MODEL_NAME` to choose a model available to your account. For another JSON-chat-compatible service, explicitly set `RECORD_DESK_BASE_URL`, `RECORD_DESK_API_KEY`, and `EVAL_MODEL_NAME`. The Groq key is never reused for a different endpoint. HTTPS is required except for loopback servers. Local servers may work without a key. Compatibility requires `/chat/completions`, JSON object responses, and the supported generation parameters; not every provider supports this contract. Other providers have not been live-tested.
+
+Run the included synthetic text benchmark explicitly (makes paid/quota-consuming provider requests):
+
+```sh
+python3 benchmark.py --models openai/gpt-oss-20b openai/gpt-oss-120b qwen/qwen3.8-27b --output benchmark-results/run-001.json
+```
+
+It uses the app's extraction prompt, keeps expected labels out of model requests, records prompt/fixture hashes, exact field correctness, unsupported values in labeled unknown fields, failures, latency and token usage. Existing output files cannot be overwritten. Results are saved after every case; interrupted runs remain partial. No automatic retries are made. Raw results can contain document content when using custom cases; keep those reports private. Token totals do not include usage unreported on failed requests and are not billing totals.
+
+See [the initial benchmark report](benchmarks/RESULTS.md). This is a small synthetic text test, not OCR accuracy, a general model ranking, or a release-quality guarantee. Independent human adjudication and real-document testing remain necessary. No default model was changed based on this run.
