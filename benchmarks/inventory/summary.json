@@ -1,0 +1,125 @@
+[
+  {
+    "version": "inventory-lab-v1",
+    "seed": 42,
+    "source_sha256": "a54b6759aa8e0aabeb811b7da05f90017842d2069d69d79db8cd41efbc41ad9d",
+    "split": {
+      "training": 2400,
+      "calibration": 1200,
+      "test": 1200
+    },
+    "threshold": 3.5,
+    "metrics": {
+      "reconciliation": {
+        "tp": 36,
+        "fp": 0,
+        "fn": 0,
+        "tn": 1164,
+        "precision": 1.0,
+        "recall": 1.0,
+        "false_alerts_per_1000": 0.0
+      },
+      "global_baseline": {
+        "tp": 25,
+        "fp": 8,
+        "fn": 22,
+        "tn": 1145,
+        "precision": 0.758,
+        "recall": 0.532,
+        "false_alerts_per_1000": 6.67
+      },
+      "per_product_robust": {
+        "tp": 33,
+        "fp": 20,
+        "fn": 14,
+        "tn": 1133,
+        "precision": 0.623,
+        "recall": 0.702,
+        "false_alerts_per_1000": 16.67
+      }
+    },
+    "note": "Synthetic daily product/location records only. Train: days 0\u201359; calibration: 60\u201389; held-out test: 90\u2013119. Detectors do not receive labels. Promotions are legitimate negative cases that may trigger false alerts. Review value is absolute quantity discrepancy \u00d7 synthetic unit value, not proven financial loss. No causal diagnosis or real-world accuracy claim."
+  },
+  {
+    "version": "inventory-lab-v1",
+    "seed": 73,
+    "source_sha256": "d6428a03dbcb11f01c9f78a88429bb6d98a0ace76b7614d377f005afdd4e2a77",
+    "split": {
+      "training": 2400,
+      "calibration": 1200,
+      "test": 1200
+    },
+    "threshold": 3.5,
+    "metrics": {
+      "reconciliation": {
+        "tp": 38,
+        "fp": 0,
+        "fn": 0,
+        "tn": 1162,
+        "precision": 1.0,
+        "recall": 1.0,
+        "false_alerts_per_1000": 0.0
+      },
+      "global_baseline": {
+        "tp": 14,
+        "fp": 10,
+        "fn": 32,
+        "tn": 1144,
+        "precision": 0.583,
+        "recall": 0.304,
+        "false_alerts_per_1000": 8.33
+      },
+      "per_product_robust": {
+        "tp": 26,
+        "fp": 21,
+        "fn": 20,
+        "tn": 1133,
+        "precision": 0.553,
+        "recall": 0.565,
+        "false_alerts_per_1000": 17.5
+      }
+    },
+    "note": "Synthetic daily product/location records only. Train: days 0\u201359; calibration: 60\u201389; held-out test: 90\u2013119. Detectors do not receive labels. Promotions are legitimate negative cases that may trigger false alerts. Review value is absolute quantity discrepancy \u00d7 synthetic unit value, not proven financial loss. No causal diagnosis or real-world accuracy claim."
+  },
+  {
+    "version": "inventory-lab-v1",
+    "seed": 109,
+    "source_sha256": "41d4c7033fd0b1ffb44c1c6083e39c9f658ae1f429186cf0f75e6cdd2f215587",
+    "split": {
+      "training": 2400,
+      "calibration": 1200,
+      "test": 1200
+    },
+    "threshold": 3.5,
+    "metrics": {
+      "reconciliation": {
+        "tp": 34,
+        "fp": 0,
+        "fn": 0,
+        "tn": 1166,
+        "precision": 1.0,
+        "recall": 1.0,
+        "false_alerts_per_1000": 0.0
+      },
+      "global_baseline": {
+        "tp": 25,
+        "fp": 10,
+        "fn": 16,
+        "tn": 1149,
+        "precision": 0.714,
+        "recall": 0.61,
+        "false_alerts_per_1000": 8.33
+      },
+      "per_product_robust": {
+        "tp": 35,
+        "fp": 24,
+        "fn": 6,
+        "tn": 1135,
+        "precision": 0.593,
+        "recall": 0.854,
+        "false_alerts_per_1000": 20.0
+      }
+    },
+    "note": "Synthetic daily product/location records only. Train: days 0\u201359; calibration: 60\u201389; held-out test: 90\u2013119. Detectors do not receive labels. Promotions are legitimate negative cases that may trigger false alerts. Review value is absolute quantity discrepancy \u00d7 synthetic unit value, not proven financial loss. No causal diagnosis or real-world accuracy claim."
+  }
+]

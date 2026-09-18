@@ -122,3 +122,9 @@ Limits: 25 MB, 20 PDF pages, 35,000 extracted characters, 40 million pixels per 
 Reading is performed in a child process with a timeout, not a security sandbox. Run only as a local single-user application. PDFium, Pillow, and Tesseract retain their upstream licenses; they are optional dependencies, not vendored into this repository.
 
 For reader integration tests, install `reportlab` alongside the optional packages. CI tests PDF text reading across all supported platforms and runs real Tesseract image/scanned-PDF checks on Linux. OCR tests are skipped when Tesseract is absent.
+
+## Inventory investigation lab
+
+Click **Run inventory investigation** to evaluate a reproducible synthetic stock dataset. The lab compares an arithmetic check and two statistical methods, shows precision/recall plus false alerts and misses, and lets you inspect the source quantities for each review candidate. Download the full evaluation/alerts as JSON. No credentials or optional packages are required.
+
+Training, calibration, and test periods are separated; labels never enter the detectors. The more detailed per-product method catches more planted anomalies but raises more false alarms. This is a research demonstration, not a real-world accuracy claim or a detector attached to arbitrary imports. See [methods, limitations, and multi-seed results](benchmarks/inventory/README.md).

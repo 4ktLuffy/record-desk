@@ -17,6 +17,9 @@ class Handler(BaseHTTPRequestHandler):
         if not self.allowed():return self.respond(403,{'error':'Local access only.'})
         route=urllib.parse.urlparse(self.path).path
         try:
+            if route=='/api/inventory-lab':
+                import inventory_lab
+                return self.respond(200,inventory_lab.run())
             if route=='/api/capabilities':
                 base=os.getenv('RECORD_DESK_BASE_URL','https://api.groq.com/openai/v1').rstrip('/')
                 local=urllib.parse.urlparse(base).hostname in ('127.0.0.1','localhost','::1')
