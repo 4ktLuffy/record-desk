@@ -47,7 +47,7 @@ CSV input is UTF-8 and comma-separated, with up to 2 MB, 10,000 data records, an
 
 The CSV workflow runs locally without a provider. Receipt extraction and natural-language questions use Groq's OpenAI-compatible API and require `GROQ_API_KEY` in the process environment. `EVAL_MODEL_NAME` optionally selects a model; the default is `openai/gpt-oss-20b`. Account limits and provider charges may apply. Extraction sends document text to the configured provider (Groq by default). Questions send the question and planning instructions. Provider-generated fields require human review before use in totals; extraction can be incorrect.
 
-OCR and PDF splitting currently require macOS and Swift developer tools. On macOS, `./start.sh` builds the OCR helper before starting. CSV features and manual document review do not require Swift. Portable OCR is future work. Set `RECORD_DESK_IMPORT` for optional local folder import; uploading individual supported files also works. `.env` files are not automatically loaded.
+Document reading supports an optional portable PDFium/Tesseract backend, described below. The existing Mac reader and PDF bundle splitting use Swift developer tools. On macOS, `./start.sh` builds that reader. CSV features and manual document review do not require Swift. Set `RECORD_DESK_IMPORT` for optional local folder import; uploading individual supported files also works. `.env` files are not automatically loaded.
 
 ## Privacy and scope
 
@@ -78,7 +78,7 @@ Tests use isolated temporary directories and synthetic inputs; they require no A
 
 ## Roadmap
 
-Configurable field rules, service-work reconciliation, approved type conversions, CSV result export, portable OCR, and accessibility testing. Authentication and tenant isolation are prerequisites for a hosted edition. See CONTRIBUTING.md and SECURITY.md.
+Configurable field rules, service-work reconciliation, approved type conversions, CSV result export, portable PDF splitting, and accessibility testing. Authentication and tenant isolation are prerequisites for a hosted edition. See CONTRIBUTING.md and SECURITY.md.
 
 ## License
 
@@ -99,3 +99,26 @@ python3 benchmark.py --models openai/gpt-oss-20b openai/gpt-oss-120b qwen/qwen3.
 It uses the app's extraction prompt, keeps expected labels out of model requests, records prompt/fixture hashes, exact field correctness, unsupported values in labeled unknown fields, failures, latency and token usage. Existing output files cannot be overwritten. Results are saved after every case; interrupted runs remain partial. No automatic retries are made. Raw results can contain document content when using custom cases; keep those reports private. Token totals do not include usage unreported on failed requests and are not billing totals.
 
 See [the initial benchmark report](benchmarks/RESULTS.md). This is a small synthetic text test, not OCR accuracy, a general model ranking, or a release-quality guarantee. Independent human adjudication and real-document testing remain necessary. No default model was changed based on this run.
+
+## Optional portable document reader
+
+The **Read text locally** button reads a document without calling a provider or changing approved fields. The extracted text appears in the document's raw-text panel. Automated field extraction uses the same reader before sending text to the configured provider.
+
+```sh
+python3 -m venv .venv
+# macOS/Linux:
+. .venv/bin/activate
+# Windows PowerShell instead: .venv\Scripts\Activate.ps1
+python -m pip install -r requirements-documents.txt
+python server.py
+```
+
+Embedded text in PDFs needs only these Python packages. For PNG/JPEG images and scanned PDF pages, install Tesseract separately and make its executable available on PATH. On Debian/Ubuntu: `sudo apt-get install tesseract-ocr`. On macOS with Homebrew: `brew install tesseract`. Windows installation guidance is in the [Tesseract documentation](https://tesseract-ocr.github.io/tessdoc/Installation.html). No OCR engine is downloaded automatically by the app.
+
+Set `RECORD_DESK_READER=portable` to explicitly choose the portable reader. The default `auto` prefers a built Mac reader when available and otherwise uses the portable option. `native` requires the Mac helper. Set `RECORD_DESK_OCR_LANG` to an installed Tesseract language code (default `eng`); installing the appropriate language data is separate.
+
+Limits: 25 MB, 20 PDF pages, 35,000 extracted characters, 40 million pixels per input image, a 90-second overall reader timeout and 30 seconds per Tesseract invocation. PDF OCR renders pages with a maximum dimension of 2,800 pixels. Pages with embedded text use that text rather than OCR, so mixed image/text pages may omit text contained only inside images. Handwriting, layout, and language accuracy are not guaranteed. Portable HEIC reading and PDF bundle splitting are not implemented; convert HEIC to PNG/JPEG and split large PDFs externally or use the Mac helper.
+
+Reading is performed in a child process with a timeout, not a security sandbox. Run only as a local single-user application. PDFium, Pillow, and Tesseract retain their upstream licenses; they are optional dependencies, not vendored into this repository.
+
+For reader integration tests, install `reportlab` alongside the optional packages. CI tests PDF text reading across all supported platforms and runs real Tesseract image/scanned-PDF checks on Linux. OCR tests are skipped when Tesseract is absent.

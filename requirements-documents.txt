@@ -1,0 +1,3 @@
+# Optional local document reader; CSV features have no package dependencies.
+pypdfium2>=4.30,<6
+Pillow>=11,<12

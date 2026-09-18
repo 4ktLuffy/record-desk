@@ -139,6 +139,20 @@ def validate(fields, ident):
                 break
     return issues
 
+def read_local(ident):
+    from document_reader import read
+    row=get(ident)
+    path=Path(row['path'])
+    if hashlib.sha256(path.read_bytes()).hexdigest()!=row['digest']:
+        raise ValueError('Source changed after import. Upload a new version.')
+    with LOCK:
+        pages=read(path,STATE)
+        raw='\n\n'.join('[Page %s]\n%s' % (i+1,text) for i,text in enumerate(pages))
+        with connection() as con:
+            con.execute('UPDATE documents SET raw=? WHERE id=?',(raw,ident))
+    return public(get(ident),True)
+
+
 def extract(ident):
     row = get(ident)
     if row['duplicate_of']:
@@ -148,17 +162,8 @@ def extract(ident):
     path = Path(row['path'])
     if hashlib.sha256(path.read_bytes()).hexdigest() != row['digest']:
         raise ValueError('Source file changed after import. Upload it again as a new version.')
-    binary = STATE/'ocr'
-    if not binary.exists():
-        raise ValueError('OCR helper is not built. Run ./start.sh.')
+    raw = read_local(ident)['raw']
     with LOCK:
-        process = subprocess.run([str(binary),str(path)],capture_output=True,timeout=90)
-        if process.returncode:
-            raise ValueError('Local text reading failed. For a PDF bundle, use Split PDF into pages first. Otherwise check that the document is readable.')
-        pages = json.loads(process.stdout)['pages']
-        raw = '\n\n'.join('[Page %s]\n%s' % (i+1,p) for i,p in enumerate(pages))
-        with connection() as con:
-            con.execute('UPDATE documents SET raw=?,status=?,error=? WHERE id=?',(raw,'review','',ident))
         if len(raw.strip()) < 25:
             raise ValueError('Not enough readable text. Try a clearer scan or enter fields manually.')
         if len(raw) > 35000:

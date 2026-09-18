@@ -12,3 +12,5 @@ uploads/
 previews/
 benchmark-results/
 .DS_Store
+
+.venv/

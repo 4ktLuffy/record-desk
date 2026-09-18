@@ -21,7 +21,9 @@ class Handler(BaseHTTPRequestHandler):
                 base=os.getenv('RECORD_DESK_BASE_URL','https://api.groq.com/openai/v1').rstrip('/')
                 local=urllib.parse.urlparse(base).hostname in ('127.0.0.1','localhost','::1')
                 configured=local or bool(os.getenv('GROQ_API_KEY') if base=='https://api.groq.com/openai/v1' else os.getenv('RECORD_DESK_API_KEY'))
-                return self.respond(200,dict(provider_configured=configured,ocr_ready=(core.STATE/'ocr').is_file(),model=core.MODEL))
+                from document_reader import capabilities
+                reader=capabilities(core.STATE)
+                return self.respond(200,dict(provider_configured=configured,ocr_ready=reader['image_ocr_ready'],reader=reader,model=core.MODEL))
             if route.startswith('/api/dataset-csv/'):
                 return self.respond(200,datasets.export_csv(route.rsplit('/',1)[1]).encode(),'text/csv; charset=utf-8')
             if route=='/api/datasets':return self.respond(200,datasets.listing())
@@ -66,6 +68,7 @@ class Handler(BaseHTTPRequestHandler):
             elif route=='/api/dataset-reconcile':result=datasets.reconcile(data['id'])
             elif route=='/api/table-inspect':result=inspect_csv(data['content'])
             elif route=='/api/import':result=core.import_folder()
+            elif route=='/api/read-local':result=core.read_local(data['id'])
             elif route=='/api/extract':result=core.extract(data['id'])
             elif route=='/api/split':result=core.split_pdf(data['id'])
             elif route=='/api/review':result=core.review(data['id'],data['fields'],data.get('approve') is True,data.get('exclude') is True)
