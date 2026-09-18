@@ -1,6 +1,7 @@
 """Receipt ingestion, evidence-preserving extraction, validation, and grounded queries."""
 import csv, datetime as dt, hashlib, io, json, os, re, shutil, sqlite3, subprocess, sys, threading, urllib.request, urllib.error, uuid
 from decimal import Decimal, InvalidOperation
+from contextlib import contextmanager
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 STATE = Path(os.getenv('RECEIPT_DESK_STATE', str(Path.home() / '.local/share/record-desk')))
@@ -10,11 +11,16 @@ MODEL = os.getenv('EVAL_MODEL_NAME', 'openai/gpt-oss-20b')
 LOCK = threading.Lock()
 FIELDS = ['merchant','receipt_number','date','calendar','currency','total','subtotal','tax','service_charge','document_type']
 
+@contextmanager
 def connection():
     STATE.mkdir(parents=True, exist_ok=True)
     con = sqlite3.connect(STATE / 'receipts.db', timeout=30)
     con.row_factory = sqlite3.Row
-    return con
+    try:
+        with con:
+            yield con
+    finally:
+        con.close()
 
 def init():
     with connection() as con:

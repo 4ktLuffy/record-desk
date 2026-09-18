@@ -8,6 +8,18 @@ class ReceiptTests(unittest.TestCase):
         self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name)
         self.p=patch.object(core,'STATE',self.root/'state');self.p.start();core.init()
     def tearDown(self):self.p.stop();self.tmp.cleanup()
+    def test_connection_is_closed_after_context_and_rolls_back(self):
+        import sqlite3
+        with core.connection() as con:
+            con.execute('CREATE TABLE lifecycle(value TEXT)')
+        with self.assertRaises(sqlite3.ProgrammingError):con.execute('SELECT 1')
+        with self.assertRaises(ValueError):
+            with core.connection() as failed:
+                failed.execute("INSERT INTO lifecycle VALUES ('must roll back')")
+                raise ValueError('abort')
+        with self.assertRaises(sqlite3.ProgrammingError):failed.execute('SELECT 1')
+        with core.connection() as check:
+            self.assertEqual(check.execute('SELECT COUNT(*) FROM lifecycle').fetchone()[0],0)
     def doc(self,name='a.jpg',content=b'fakeimage'):
         p=self.root/name;p.write_bytes(content);return core.add(p)[0]
     def fields(self,**changes):
