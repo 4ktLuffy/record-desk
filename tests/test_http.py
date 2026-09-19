@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 import core
 import datasets
+import investigations
 from server import Handler, ThreadingHTTPServer
 
 
@@ -15,7 +16,7 @@ class WorkflowHTTPTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory()
         self.state=patch.object(core,'STATE',Path(self.tmp.name));self.state.start()
-        core.init();datasets.init()
+        core.init();datasets.init();investigations.init()
         self.server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
         self.thread=threading.Thread(target=self.server.serve_forever,daemon=True);self.thread.start()
         self.url='http://127.0.0.1:'+str(self.server.server_port)
@@ -50,3 +51,16 @@ class WorkflowHTTPTests(unittest.TestCase):
             self.post('/api/demo',{},'https://untrusted.example')
         self.assertEqual(error.exception.code,403)
         self.assertEqual(datasets.listing(),[])
+
+    def test_inventory_saved_run_and_review(self):
+        data=self.post('/api/investigation-demo',{})
+        data['contract']='daily-whole-units-v1'
+        report=self.post('/api/investigation-run',data)
+        self.assertEqual(report['counts']['quarantined'],2)
+        self.assertEqual(report['counts']['investigated'],60)
+        self.assertEqual(report['counts']['statistical_skipped'],0)
+        updated=self.post('/api/investigation-review',dict(run_id=report['id'],record=report['results'][0]['record'],decision='needs investigation',note='Check source ledger'))
+        with urllib.request.urlopen(self.url+'/api/investigation/'+report['id']) as response:
+            self.assertEqual(json.load(response),updated)
+        with urllib.request.urlopen(self.url+'/inventory.js') as response:
+            self.assertEqual(response.status,200)

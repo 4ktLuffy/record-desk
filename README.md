@@ -128,3 +128,22 @@ For reader integration tests, install `reportlab` alongside the optional package
 Click **Run inventory investigation** to evaluate a reproducible synthetic stock dataset. The lab compares an arithmetic check and two statistical methods, shows precision/recall plus false alerts and misses, and lets you inspect the source quantities for each review candidate. Download the full evaluation/alerts as JSON. No credentials or optional packages are required.
 
 Training, calibration, and test periods are separated; labels never enter the detectors. The more detailed per-product method catches more planted anomalies but raises more false alarms. This is a research demonstration, not a real-world accuracy claim or a detector attached to arbitrary imports. See [methods, limitations, and multi-seed results](benchmarks/inventory/README.md).
+
+## Investigate an uploaded inventory CSV
+
+The **Investigate daily inventory** workspace connects saved CSVs to persistent checks and human review. No API key or optional packages are needed.
+
+1. Click **Try a synthetic source CSV** for a mapped example, or save a UTF-8 CSV under **Inspect a spreadsheet export**, then refresh the inventory dataset list.
+2. Select a source and explicitly map `date`, `product`, `warehouse`, `opening`, `received`, `sold`, and `closing` to distinct columns.
+3. Choose chronological training, calibration, and investigation end dates. Confirm that the stock contract applies, then click **Validate and save investigation**.
+4. Inspect quarantine reasons, history coverage, fitted profiles, and source evidence. Select a record and append a review decision with a supporting note. Reopen saved runs or download the complete JSON report, including all review events.
+
+**Contract:** one daily snapshot per exact, case-sensitive product/location identity; Gregorian `YYYY-MM-DD`; nonnegative whole units up to 999,999,999; `closing = opening + received − sold`. Returns, transfers, adjustments, fractional quantities, non-daily snapshots and mixed units require a different contract and are not supported by this detector. Do not confirm this contract for incompatible data. Extra columns are preserved as evidence but do not influence detection.
+
+Malformed cells and all duplicate identity occurrences are quarantined; nothing is silently repaired or filled with zero. Records are analyzed in date order while retaining original CSV record numbers. Each series needs 30 consecutive training days ending at the training cutoff and a complete calibration period of at least 14 days. The training median and median absolute deviation set a robust scale (floor: one unit); the calibration-only 99th percentile sets the upper-tail threshold (floor: 3.5). Statistical scoring is skipped with a reason when history is insufficient. Arithmetic and previous-day continuity checks still operate; missing prior days make continuity unknown. Missing investigation days are counted per series. Future rows beyond the investigation end are reported as outside the window and cannot affect profiles.
+
+Runs store the source SHA-256, column mapping, contract/detector version, cutoffs, fitted profiles, original investigated/quarantined cells, and timestamp. SQLite triggers reject updates and deletion of run/review rows through ordinary SQL. This is local application history, not tamper-proof storage or authenticated reviewer identity: a machine owner can alter the database/schema. Review decisions never silently retrain the detector and are not independent evaluation labels.
+
+The starter source has 242 records: 240 valid daily rows and two deliberately invalid records. Its default cutoffs investigate 60 records and flag eight review candidates. These are counts, not accuracy measurements. Promotions, seasonal shifts, contaminated history, and legitimate process changes can raise or hide alerts. This version does not model seasonality or infer causes. Precision/recall remain confined to the separately labeled synthetic lab; its published metrics do not describe this import detector. Uploaded inventory is not sent to a model and does not enter receipt totals.
+
+Implementation: `investigations.py` validates and persists runs; `dist/inventory.js` provides mapping, evidence and review controls. Run `node --check dist/inventory.js` alongside the existing development checks.
