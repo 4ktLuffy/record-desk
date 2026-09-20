@@ -4,6 +4,7 @@ from pathlib import Path
 import core
 import datasets
 import investigations
+import order_checks
 import os
 from table_quality import inspect_csv
 class Handler(BaseHTTPRequestHandler):
@@ -18,6 +19,7 @@ class Handler(BaseHTTPRequestHandler):
         if not self.allowed():return self.respond(403,{'error':'Local access only.'})
         route=urllib.parse.urlparse(self.path).path
         try:
+            if route=='/api/order-runs':return self.respond(200,investigations.listing('orders'))
             if route=='/api/investigations':return self.respond(200,investigations.listing())
             if route.startswith('/api/investigation/'):return self.respond(200,investigations.get(route.rsplit('/',1)[1]))
             if route=='/api/inventory-lab':
@@ -53,7 +55,7 @@ class Handler(BaseHTTPRequestHandler):
                         values=[r['id'],r['name']]+[r['fields'].get(k,'') for k in core.FIELDS]
                         writer.writerow(["'"+v if isinstance(v,str) and v.startswith(('=','+','-','@','\t','\r')) else v for v in values])
                 return self.respond(200,stream.getvalue().encode(),'text/csv; charset=utf-8')
-            static={'/':'index.html','/app.js':'app.js','/inventory.js':'inventory.js','/style.css':'style.css','/favicon.svg':'favicon.svg'}
+            static={'/':'index.html','/app.js':'app.js','/inventory.js':'inventory.js','/orders.js':'orders.js','/timeline.js':'timeline.js','/style.css':'style.css','/favicon.svg':'favicon.svg'}
             if route in static:
                 p=core.ROOT/'dist'/static[route];return self.respond(200,p.read_bytes(),mimetypes.guess_type(p.name)[0] or 'text/plain')
             self.respond(404,{'error':'Not found.'})
@@ -66,7 +68,9 @@ class Handler(BaseHTTPRequestHandler):
             size=int(self.headers.get('Content-Length',0))
             if size<=0 or size>35*1024*1024:raise ValueError('Request exceeds upload limit.')
             data=json.loads(self.rfile.read(size));route=urllib.parse.urlparse(self.path).path
-            if route=='/api/investigation-run':result=investigations.run(**data)
+            if route=='/api/order-run':result=order_checks.run(**data)
+            elif route=='/api/order-demo':result=order_checks.demo()
+            elif route=='/api/investigation-run':result=investigations.run(**data)
             elif route=='/api/investigation-review':result=investigations.review(**data)
             elif route=='/api/investigation-demo':result=investigations.demo()
             elif route=='/api/demo':result=datasets.demo()

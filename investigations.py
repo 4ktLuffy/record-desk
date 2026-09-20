@@ -16,7 +16,7 @@ import core
 import datasets
 from table_quality import inspect_csv
 
-VERSION = 'inventory-import-v1'
+VERSION = 'inventory-import-v2'
 ROLES = ('date', 'product', 'warehouse', 'opening', 'received', 'sold', 'closing')
 DECISIONS = ('confirmed issue', 'expected event', 'needs investigation')
 
@@ -91,7 +91,7 @@ def run(dataset_id, mapping, train_end, calibration_end, test_end, contract):
     # quantities are invalid. Never let a bad duplicate make its partner trusted.
     keys = Counter()
     for cells in raw[1:]:
-        if len(cells) == width:
+        if len(cells) > max(mapping[k] for k in ('date','product','warehouse')):
             keys[tuple(cells[mapping[k]] for k in ('date', 'product', 'warehouse'))] += 1
     valid = []
     for row in candidates:
@@ -143,23 +143,32 @@ def run(dataset_id, mapping, train_end, calibration_end, test_end, contract):
                                 continuity_delta=continuity_delta, prior_record=prior['record'] if prior else None,
                                 score=score, statistical_skip_reason=reason,
                                 raw=raw[row['record']-1]))
-    report = dict(id=uuid.uuid4().hex, version=VERSION, created=timestamp(), dataset_id=dataset_id,
+    report = dict(id=uuid.uuid4().hex, kind='inventory', version=VERSION, created=timestamp(), dataset_id=dataset_id,
                   source_sha256=dataset_id, source_name=source['name'], headers=raw[0], mapping=mapping,
                   contract=contract, cutoffs=dict(train_end=train_end, calibration_end=calibration_end, test_end=test_end),
                   counts=dict(source=len(raw)-1, valid=len(valid), quarantined=len(quarantine),
                               outside_window=sum(r['date']>test_end for r in valid), investigated=len(results),
                               flagged=sum(bool(r['flags']) for r in results), statistical_skipped=sum(r['score'] is None for r in results)),
+                  timeline=[dict(record=r['record'], date=r['date'], product=r['product'], warehouse=r['warehouse'], sold=r['sold'],
+                                 period='earlier history' if r['date'] < str(a-dt.timedelta(days=29)) else
+                                        'training' if r['date'] <= train_end else
+                                        'calibration' if r['date'] <= calibration_end else 'investigation')
+                            for r in valid if r['date'] <= test_end],
                   profiles=profiles, series=series, quarantine=sorted(quarantine,key=lambda r:r['record']), results=results,
                   note='Local deterministic checks. Whole units, daily snapshots, exact case-sensitive identities. Only the last 30 training days fit each profile; calibration sets a one-sided 99th-percentile threshold with floor 3.5. No future rows or review decisions train the detector. Missing days are not zero sales. Arithmetic assumes no transfers, returns or adjustments. Promotions may trigger alerts. Flags require review; no accuracy or financial-loss claim. Local review notes are not authenticated identities or independent ground truth.')
+    return persist(report)
+
+
+def persist(report):
     with core.connection() as con:
-        con.execute('INSERT INTO investigations VALUES (?,?,?)', (report['id'], dataset_id, json.dumps(report)))
+        con.execute('INSERT INTO investigations VALUES (?,?,?)', (report['id'], report['dataset_id'], json.dumps(report)))
     return get(report['id'])
 
 
-def listing():
+def listing(kind='inventory'):
     with core.connection() as con:
         rows = con.execute('SELECT report FROM investigations ORDER BY rowid DESC').fetchall()
-    return [{k:r[k] for k in ('id','source_name','created','counts')} for r in (json.loads(x['report']) for x in rows)]
+    return [{k:r[k] for k in ('id','source_name','created','counts')} for r in (json.loads(x['report']) for x in rows) if r.get('kind','inventory') == kind]
 
 
 def get(ident):

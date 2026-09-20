@@ -4,7 +4,7 @@
 
 Turn messy business files into checked, traceable records.
 
-A local data-quality and reconciliation workspace. Compare spreadsheet exports, inspect discrepancies, preview cleanup, and preserve a trail back to the original values. No account or credentials are needed for the CSV workflow.
+A local data-quality and reconciliation workspace. Compare spreadsheet exports, investigate daily inventory, check order delivery commitments, and preserve a trail back to the original values. No account or credentials are needed for the CSV workflow.
 
 ## Quick start
 
@@ -26,6 +26,8 @@ Click **Try inventory demo**, then **Compare datasets**. The two synthetic expor
 4. Select its key/value columns and compare again. The spaced product code now matches; the duplicate and quantity conflict remain visible.
 5. Download the complete JSON report, including dataset fingerprints, mapping, source record numbers, and every result group.
 
+For delivery operations, click **Try order delivery demo**, confirm the snapshot contract, and run the investigation. For inventory time series, click **Try a synthetic source CSV**, confirm the daily stock contract, run, then select a product/location to explore its timeline. Both workflows preserve source records and save review decisions locally.
+
 ## Capabilities
 
 - CSV structural checks: missing cells, repeated rows, ambiguous headers, row lengths, surrounding whitespace.
@@ -35,6 +37,8 @@ Click **Try inventory demo**, then **Compare datasets**. The two synthetic expor
 - Reviewable whitespace trimming into a separate version with source linkage and audit history.
 - Result filtering and complete report export, independent of the first-200-group display limit.
 - Download saved/cleaned CSVs from the saved-dataset panel. Formula-like cells receive a leading apostrophe for spreadsheet safety; stored originals remain exact.
+- Inventory timelines with training/calibration/investigation periods, calibrated threshold, missing-day gaps, and clickable source evidence.
+- Committed-order delivery checks: overdue queues, per-team delivered on-time rates with explicit denominators, calendar-day lead times, quarantine, and saved review history.
 - Optional receipt/invoice extraction, human review, approved-record totals, and comparison against mapped CSVs.
 
 ## Comparison semantics
@@ -147,3 +151,30 @@ Runs store the source SHA-256, column mapping, contract/detector version, cutoff
 The starter source has 242 records: 240 valid daily rows and two deliberately invalid records. Its default cutoffs investigate 60 records and flag eight review candidates. These are counts, not accuracy measurements. Promotions, seasonal shifts, contaminated history, and legitimate process changes can raise or hide alerts. This version does not model seasonality or infer causes. Precision/recall remain confined to the separately labeled synthetic lab; its published metrics do not describe this import detector. Uploaded inventory is not sent to a model and does not enter receipt totals.
 
 Implementation: `investigations.py` validates and persists runs; `dist/inventory.js` provides mapping, evidence and review controls. Run `node --check dist/inventory.js` alongside the existing development checks.
+
+
+## Inventory timelines and review queues
+
+New inventory runs store their validated sales observations and period membership. Select **Product / location** to see the last 30 training days, calibration, and investigation periods. Earlier history and rows beyond the investigation end are not plotted. Missing or quarantined days break the line; they are not filled with zeros. The dashed upper threshold is a reference derived from training and calibration only. Orange points indicate any flagged check, including stock arithmetic or continuity, not just unusual sales. Click or keyboard-select an investigation point to open its source evidence; the table and record selector provide the same access. Small screens can scroll the chart horizontally.
+
+Filter the queue to flagged, unreviewed, reviewed, or all investigated records. Uploading a new saved CSV refreshes workflow source lists automatically. Older saved runs remain unchanged and readable; runs created before timeline storage show a message instead of reconstructing history under newer rules. Version `inventory-import-v2` also excludes a valid row when a malformed-width duplicate still contains its full identity.
+
+## Committed-order delivery checks
+
+Use a source snapshot with explicit mappings for `order_id`, `team`, `ordered_on`, `due_on`, and `delivered_on`. The `committed-orders-v1` contract requires one row per committed, uncancelled order. A blank delivery date means undelivered at the end of the chosen snapshot date. Other mapped cells must be present without surrounding whitespace; dates must be Gregorian `YYYY-MM-DD`. Extra source columns are retained as evidence.
+
+Duplicate IDs (including identifiable malformed duplicates), inconsistent row lengths, malformed dates, dates before ordering, and order/delivery events after the snapshot are quarantined. Due dates may extend beyond the snapshot. Future deliveries are not used to reconstruct past status. The user must provide the correct source snapshot; this tool cannot establish historical completeness or detect a silently revised promise date.
+
+Valid orders receive one of five statuses: **open overdue**, **due today**, **upcoming**, **delivered late**, or **delivered on time**. Late means strictly after the due date. Days are calendar days; there is no business-hours, holiday, timezone, partial-delivery, cancellation, or revised-commitment model. The on-time rate is on-time deliveries divided by all valid delivered orders; it is undefined when none were delivered. Open overdue orders are shown separately and never treated as successful deliveries. Lead time is days from ordering to delivery among delivered orders only. Team summaries describe the uploaded valid subset, not responsibility or comparative team performance.
+
+Runs save source fingerprints, mappings, snapshot date, rule version, every result, and quarantine reasons. Filter by team/status, inspect source cells, append evidence notes, reopen runs, or export complete JSON. Reviews do not change the original status calculations. This workflow uses deterministic rules and descriptive statistics, with no external provider calls or predictive accuracy claims.
+
+The synthetic starter has 11 rows: eight valid orders and three quarantined records (a duplicated ID pair and an invalid date). At its fixed 2026-09-20 snapshot, two orders are open overdue, two were delivered late, two on time, one is due today, and one upcoming. Delivered on-time rate is 2/4, with a median delivered lead time of 8.5 calendar days. These are fixture results, not evidence about any company.
+
+Additional development checks:
+
+```sh
+node --check dist/orders.js
+node --check dist/timeline.js
+node tests/test_timeline.js
+```

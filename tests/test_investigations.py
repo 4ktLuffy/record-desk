@@ -116,3 +116,27 @@ class InvestigationTests(unittest.TestCase):
         for changes in ({'contract':'other'},{'mapping':{k:0 for k in inv.ROLES}},{'train_end':'2026-02-13'},{'train_end':'2026-02-30'},{'train_end':'0001-01-01'}):
             with self.subTest(changes=changes),self.assertRaises(ValueError):inv.run(ident,**dict(self.options,**changes))
         self.assertEqual(inv.listing(),[])
+
+    def test_timeline_preserves_real_gaps_and_periods_without_future(self):
+        self.rows.pop(50)
+        self.rows.append(['2027-01-01','P1','North',100,5,5,100])
+        r=self.run_rows(self.rows)
+        dates={p['date'] for p in r['timeline']}
+        self.assertNotIn('2026-02-20',dates)
+        self.assertNotIn('2027-01-01',dates)
+        self.assertEqual(len(r['timeline']),64)
+        self.assertEqual({p['period'] for p in r['timeline']},{'training','calibration','investigation'})
+        self.assertEqual([p['record'] for p in r['timeline'] if p['date']=='2026-01-01'],[2])
+
+    def test_legacy_run_listing_and_report_remain_readable(self):
+        r=self.run_rows(self.rows)
+        r.pop('timeline');r.pop('kind');r.pop('reviews');r['id']='legacy-v1';r['version']='inventory-import-v1'
+        inv.persist(r)
+        saved=inv.get('legacy-v1')
+        self.assertNotIn('timeline',saved)
+        self.assertTrue(any(x['id']=='legacy-v1' for x in inv.listing()))
+
+    def test_malformed_width_duplicate_excludes_valid_partner(self):
+        self.rows.append(self.rows[-1][:3])
+        r=self.run_rows(self.rows)
+        self.assertEqual(r['counts']['quarantined'],2)

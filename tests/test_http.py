@@ -64,3 +64,15 @@ class WorkflowHTTPTests(unittest.TestCase):
             self.assertEqual(json.load(response),updated)
         with urllib.request.urlopen(self.url+'/inventory.js') as response:
             self.assertEqual(response.status,200)
+
+    def test_order_workflow_is_saved_and_separate_from_inventory(self):
+        d=self.post('/api/order-demo',{});d['contract']='committed-orders-v1'
+        r=self.post('/api/order-run',d)
+        self.assertEqual(r['counts']['quarantined'],3)
+        self.assertEqual(r['summary']['open_overdue'],2)
+        with urllib.request.urlopen(self.url+'/api/order-runs') as response:
+            self.assertEqual(json.load(response)[0]['id'],r['id'])
+        with urllib.request.urlopen(self.url+'/api/investigations') as response:
+            self.assertEqual(json.load(response),[])
+        for path in ('/orders.js','/timeline.js'):
+            with urllib.request.urlopen(self.url+path) as response:self.assertEqual(response.status,200)
