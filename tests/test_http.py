@@ -9,6 +9,7 @@ from unittest.mock import patch
 import core
 import datasets
 import investigations
+import pipelines
 from server import Handler, ThreadingHTTPServer
 
 
@@ -16,7 +17,7 @@ class WorkflowHTTPTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory()
         self.state=patch.object(core,'STATE',Path(self.tmp.name));self.state.start()
-        core.init();datasets.init();investigations.init()
+        core.init();datasets.init();investigations.init();pipelines.init()
         self.server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
         self.thread=threading.Thread(target=self.server.serve_forever,daemon=True);self.thread.start()
         self.url='http://127.0.0.1:'+str(self.server.server_port)
@@ -76,3 +77,19 @@ class WorkflowHTTPTests(unittest.TestCase):
             self.assertEqual(json.load(response),[])
         for path in ('/orders.js','/timeline.js'):
             with urllib.request.urlopen(self.url+path) as response:self.assertEqual(response.status,200)
+
+    def test_pipeline_gate_and_publication_over_http(self):
+        demo=self.post('/api/pipeline-demo',{})
+        good=self.post('/api/pipeline-run',dict(contract_id=demo['contract_id'],dataset_id=demo['good']))
+        pub=self.post('/api/pipeline-publish',dict(run_id=good['id'],expected_current=None))
+        bad=self.post('/api/pipeline-run',dict(contract_id=demo['contract_id'],dataset_id=demo['bad']))
+        self.assertFalse(bad['gate']['passed'])
+        with self.assertRaises(urllib.error.HTTPError) as error:
+            self.post('/api/pipeline-publish',dict(run_id=bad['id'],expected_current=good['id']))
+        self.assertEqual(error.exception.code,400)
+        with urllib.request.urlopen(self.url+'/api/pipeline/'+demo['pipeline_id']) as response:
+            self.assertEqual(json.load(response)['current']['dataset_id'],pub['dataset_id'])
+        with urllib.request.urlopen(self.url+'/api/pipeline-export/'+bad['id']+'/quarantine') as response:
+            self.assertIn('duplicate_key',response.read().decode())
+        with self.assertRaises(urllib.error.HTTPError):
+            urllib.request.urlopen(self.url+'/api/pipeline-export/'+bad['id']+'/accepted')

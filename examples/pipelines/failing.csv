@@ -1,0 +1,4 @@
+id,date,amount,active
+A1,2026-09-18,12.50,true
+A1,2026-09-19,18.00,false
+A3,2026-02-30,unknown,true

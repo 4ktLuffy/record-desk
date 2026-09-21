@@ -28,6 +28,12 @@ Click **Try inventory demo**, then **Compare datasets**. The two synthetic expor
 
 For delivery operations, click **Try order delivery demo**, confirm the snapshot contract, and run the investigation. For inventory time series, click **Try a synthetic source CSV**, confirm the daily stock contract, run, then select a product/location to explore its timeline. Both workflows preserve source records and save review decisions locally.
 
+## Data engineering pipelines
+
+Define reusable, versioned CSV contracts with explicit types, required fields and composite keys. Validate each snapshot batch, quarantine invalid rows, and publish accepted data only after its quality gate passes. Failed batches leave the last published snapshot unchanged. Source hashes, rule versions, execution identities and publication history make results traceable; repeated inputs reuse their existing run.
+
+Try **Data pipelines → Load pipeline demo** to publish a passing batch and see a failing batch blocked. A CLI supports scripted validation with useful exit codes. No credentials are required. See [pipeline semantics, examples, outputs and CLI usage](docs/PIPELINES.md).
+
 ## Capabilities
 
 - CSV structural checks: missing cells, repeated rows, ambiguous headers, row lengths, surrounding whitespace.
