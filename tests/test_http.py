@@ -11,6 +11,7 @@ import datasets
 import investigations
 import pipelines
 import incidents
+import reconciliation
 from server import Handler, ThreadingHTTPServer
 
 
@@ -18,7 +19,7 @@ class WorkflowHTTPTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory()
         self.state=patch.object(core,'STATE',Path(self.tmp.name));self.state.start()
-        core.init();datasets.init();investigations.init();pipelines.init();incidents.init()
+        core.init();datasets.init();investigations.init();pipelines.init();incidents.init();reconciliation.init()
         self.server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
         self.thread=threading.Thread(target=self.server.serve_forever,daemon=True);self.thread.start()
         self.url='http://127.0.0.1:'+str(self.server.server_port)
@@ -64,6 +65,18 @@ class WorkflowHTTPTests(unittest.TestCase):
             self.assertEqual(len(json.load(response)),2)
         with urllib.request.urlopen(self.url+'/incidents.js') as response:
             self.assertIn(b'incidentRender',response.read())
+
+    def test_user_snapshot_reconciliation_and_candidate(self):
+        ref=self.post('/api/dataset-save',dict(name='reference.csv',content='id,plan\nA,pro\n'))['id']
+        delivered=self.post('/api/dataset-save',dict(name='delivery.csv',content='id,plan\nA,basic\nX,extra\n'))['id']
+        report=self.post('/api/reconciliation-compare',dict(reference_id=ref,delivery_id=delivered,keys=['id'],authority='Owner-approved export',scope='All accounts',reference_date='2026-09-21',delivery_date='2026-09-21',as_of='2026-09-22',max_age_days=1,confirmed=True))
+        fixed=self.post('/api/reconciliation-repair',dict(run_id=report['id'],issue_ids=[i['id'] for i in report['issues']],note='Reference checked with owner.'))
+        self.assertTrue(fixed['matched'])
+        with urllib.request.urlopen(self.url+'/api/reconciliation-bundle/'+fixed['id']) as response:
+            self.assertIn('attachment;',response.headers['Content-Disposition'])
+            self.assertEqual(json.load(response)['parent_report'],report)
+        with urllib.request.urlopen(self.url+'/api/reconciliations') as response:self.assertEqual(len(json.load(response)),2)
+        with urllib.request.urlopen(self.url+'/api/reconciliation/'+report['id']) as response:self.assertEqual(json.load(response),report)
 
     def test_cross_origin_writes_rejected(self):
         with self.assertRaises(urllib.error.HTTPError) as error:

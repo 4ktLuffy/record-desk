@@ -48,6 +48,12 @@ For a simpler CSV comparison, click **Try inventory demo**, then **Compare datas
 
 For delivery operations, click **Try order delivery demo**, confirm the snapshot contract, and run the investigation. For inventory time series, click **Try a synthetic source CSV**, confirm the daily stock contract, run, then select a product/location to explore its timeline. Both workflows preserve source records and save review decisions locally.
 
+## Reconcile your own snapshots
+
+The incident workflow now extends to your own CSV pairs. Nominate a reference, declare its authority and snapshot scope, choose a composite record identity, and compare every field. Missing, unexpected, duplicate and changed identities carry source-record evidence. Stale dates, ambiguous references and invalid identities block candidate repairs.
+
+Select explicit replacements or removals, explain the correction, and recheck an isolated candidate. Originals remain unchanged. **[Try the customer-record example and read the exact contract →](docs/SNAPSHOT_RECONCILIATION.md)**
+
 ## Data engineering pipelines
 
 Define reusable, versioned CSV contracts with explicit types, required fields and composite keys. Validate each snapshot batch, quarantine invalid rows, and publish accepted data only after its quality gate passes. Failed batches leave the last published snapshot unchanged. Source hashes, rule versions, execution identities and publication history make results traceable; repeated inputs reuse their existing run.

@@ -7,6 +7,7 @@ import investigations
 import order_checks
 import pipelines
 import incidents
+import reconciliation
 import os
 from table_quality import inspect_csv
 class Handler(BaseHTTPRequestHandler):
@@ -22,6 +23,9 @@ class Handler(BaseHTTPRequestHandler):
         if not self.allowed():return self.respond(403,{'error':'Local access only.'})
         route=urllib.parse.urlparse(self.path).path
         try:
+            if route=='/api/reconciliations':return self.respond(200,reconciliation.listing())
+            if route.startswith('/api/reconciliation-bundle/'):return self.respond(200,reconciliation.bundle(route.rsplit('/',1)[1]),download='reconciliation-evidence.json')
+            if route.startswith('/api/reconciliation/'):return self.respond(200,reconciliation.get(route.rsplit('/',1)[1]))
             if route=='/api/incidents':return self.respond(200,incidents.listing())
             if route.startswith('/api/incident-bundle/'):return self.respond(200,incidents.bundle(route.rsplit('/',1)[1]),download='incident-evidence.json')
             if route.startswith('/api/incident/'):return self.respond(200,incidents.get(route.rsplit('/',1)[1]))
@@ -68,7 +72,7 @@ class Handler(BaseHTTPRequestHandler):
                         values=[r['id'],r['name']]+[r['fields'].get(k,'') for k in core.FIELDS]
                         writer.writerow(["'"+v if isinstance(v,str) and v.startswith(('=','+','-','@','\t','\r')) else v for v in values])
                 return self.respond(200,stream.getvalue().encode(),'text/csv; charset=utf-8')
-            static={'/':'index.html','/app.js':'app.js','/inventory.js':'inventory.js','/orders.js':'orders.js','/pipelines.js':'pipelines.js','/incidents.js':'incidents.js','/timeline.js':'timeline.js','/style.css':'style.css','/favicon.svg':'favicon.svg'}
+            static={'/':'index.html','/app.js':'app.js','/inventory.js':'inventory.js','/orders.js':'orders.js','/pipelines.js':'pipelines.js','/incidents.js':'incidents.js','/reconciliation.js':'reconciliation.js','/timeline.js':'timeline.js','/style.css':'style.css','/favicon.svg':'favicon.svg'}
             if route in static:
                 p=core.ROOT/'dist'/static[route];return self.respond(200,p.read_bytes(),mimetypes.guess_type(p.name)[0] or 'text/plain')
             self.respond(404,{'error':'Not found.'})
@@ -81,7 +85,9 @@ class Handler(BaseHTTPRequestHandler):
             size=int(self.headers.get('Content-Length',0))
             if size<=0 or size>35*1024*1024:raise ValueError('Request exceeds upload limit.')
             data=json.loads(self.rfile.read(size));route=urllib.parse.urlparse(self.path).path
-            if route=='/api/incident-simulate':result=incidents.simulate(**data)
+            if route=='/api/reconciliation-compare':result=reconciliation.compare(**data)
+            elif route=='/api/reconciliation-repair':result=reconciliation.repair(**data)
+            elif route=='/api/incident-simulate':result=incidents.simulate(**data)
             elif route=='/api/incident-repair':result=incidents.repair(**data)
             elif route=='/api/pipeline-contract':result=pipelines.save_contract(**data)
             elif route=='/api/pipeline-run':result=pipelines.run(**data)
@@ -122,5 +128,6 @@ if __name__=='__main__':
     investigations.init()
     pipelines.init()
     incidents.init()
+    reconciliation.init()
     server=ThreadingHTTPServer(('127.0.0.1',args.port),Handler)
     print('Record Desk: http://127.0.0.1:%s'%args.port,flush=True);server.serve_forever()
