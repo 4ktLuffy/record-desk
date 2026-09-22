@@ -10,6 +10,7 @@ import core
 import datasets
 import investigations
 import pipelines
+import incidents
 from server import Handler, ThreadingHTTPServer
 
 
@@ -17,7 +18,7 @@ class WorkflowHTTPTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory()
         self.state=patch.object(core,'STATE',Path(self.tmp.name));self.state.start()
-        core.init();datasets.init();investigations.init();pipelines.init()
+        core.init();datasets.init();investigations.init();pipelines.init();incidents.init()
         self.server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
         self.thread=threading.Thread(target=self.server.serve_forever,daemon=True);self.thread.start()
         self.url='http://127.0.0.1:'+str(self.server.server_port)
@@ -46,6 +47,23 @@ class WorkflowHTTPTests(unittest.TestCase):
         with urllib.request.urlopen(self.url+'/api/dataset/'+derived) as response:
             history=json.load(response)['history']
         self.assertEqual(json.loads(history[-1]['value'])['source'],d['left'])
+
+    def test_incident_replay_repair_and_bundle(self):
+        r=self.post('/api/incident-simulate',dict(seed=17,faults=['missing_region']))
+        self.assertFalse(r['verified'])
+        fixed=self.post('/api/incident-repair',dict(incident_id=r['id'],payment_ids=[i['payment_id'] for i in r['issues']]))
+        self.assertTrue(fixed['verified'])
+        with urllib.request.urlopen(self.url+'/api/incident-bundle/'+fixed['id']) as response:
+            self.assertIn('attachment;',response.headers['Content-Disposition'])
+            bundle=json.load(response)
+        self.assertEqual(bundle['parent_report'],r)
+        self.assertIn('original_delivery',bundle['files'])
+        with urllib.request.urlopen(self.url+'/api/incident/'+r['id']) as response:
+            self.assertEqual(json.load(response),r)
+        with urllib.request.urlopen(self.url+'/api/incidents') as response:
+            self.assertEqual(len(json.load(response)),2)
+        with urllib.request.urlopen(self.url+'/incidents.js') as response:
+            self.assertIn(b'incidentRender',response.read())
 
     def test_cross_origin_writes_rejected(self):
         with self.assertRaises(urllib.error.HTTPError) as error:

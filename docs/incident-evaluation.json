@@ -1,0 +1,288 @@
+{
+  "engine": "revenue-replay-v1",
+  "scope": "24 deterministic synthetic reconciliation cases; no real-world accuracy claim.",
+  "cases": [
+    {
+      "seed": 3,
+      "faults": [],
+      "expected": 0,
+      "detected": 0,
+      "schema_blocked": false,
+      "reconciliation_blocked": false,
+      "passed": true
+    },
+    {
+      "seed": 3,
+      "faults": [
+        "missing_region"
+      ],
+      "expected": 4,
+      "detected": 4,
+      "schema_blocked": false,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 3,
+      "faults": [
+        "duplicate_retry"
+      ],
+      "expected": 1,
+      "detected": 1,
+      "schema_blocked": true,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 3,
+      "faults": [
+        "missing_region",
+        "duplicate_retry"
+      ],
+      "expected": 5,
+      "detected": 5,
+      "schema_blocked": true,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 3,
+      "faults": [
+        "amount_unit"
+      ],
+      "expected": 1,
+      "detected": 1,
+      "schema_blocked": false,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 3,
+      "faults": [
+        "missing_region",
+        "amount_unit"
+      ],
+      "expected": 5,
+      "detected": 5,
+      "schema_blocked": false,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 3,
+      "faults": [
+        "duplicate_retry",
+        "amount_unit"
+      ],
+      "expected": 2,
+      "detected": 2,
+      "schema_blocked": true,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 3,
+      "faults": [
+        "missing_region",
+        "duplicate_retry",
+        "amount_unit"
+      ],
+      "expected": 6,
+      "detected": 6,
+      "schema_blocked": true,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 17,
+      "faults": [],
+      "expected": 0,
+      "detected": 0,
+      "schema_blocked": false,
+      "reconciliation_blocked": false,
+      "passed": true
+    },
+    {
+      "seed": 17,
+      "faults": [
+        "missing_region"
+      ],
+      "expected": 4,
+      "detected": 4,
+      "schema_blocked": false,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 17,
+      "faults": [
+        "duplicate_retry"
+      ],
+      "expected": 1,
+      "detected": 1,
+      "schema_blocked": true,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 17,
+      "faults": [
+        "missing_region",
+        "duplicate_retry"
+      ],
+      "expected": 5,
+      "detected": 5,
+      "schema_blocked": true,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 17,
+      "faults": [
+        "amount_unit"
+      ],
+      "expected": 1,
+      "detected": 1,
+      "schema_blocked": false,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 17,
+      "faults": [
+        "missing_region",
+        "amount_unit"
+      ],
+      "expected": 5,
+      "detected": 5,
+      "schema_blocked": false,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 17,
+      "faults": [
+        "duplicate_retry",
+        "amount_unit"
+      ],
+      "expected": 2,
+      "detected": 2,
+      "schema_blocked": true,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 17,
+      "faults": [
+        "missing_region",
+        "duplicate_retry",
+        "amount_unit"
+      ],
+      "expected": 6,
+      "detected": 6,
+      "schema_blocked": true,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 91,
+      "faults": [],
+      "expected": 0,
+      "detected": 0,
+      "schema_blocked": false,
+      "reconciliation_blocked": false,
+      "passed": true
+    },
+    {
+      "seed": 91,
+      "faults": [
+        "missing_region"
+      ],
+      "expected": 4,
+      "detected": 4,
+      "schema_blocked": false,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 91,
+      "faults": [
+        "duplicate_retry"
+      ],
+      "expected": 1,
+      "detected": 1,
+      "schema_blocked": true,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 91,
+      "faults": [
+        "missing_region",
+        "duplicate_retry"
+      ],
+      "expected": 5,
+      "detected": 5,
+      "schema_blocked": true,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 91,
+      "faults": [
+        "amount_unit"
+      ],
+      "expected": 1,
+      "detected": 1,
+      "schema_blocked": false,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 91,
+      "faults": [
+        "missing_region",
+        "amount_unit"
+      ],
+      "expected": 5,
+      "detected": 5,
+      "schema_blocked": false,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 91,
+      "faults": [
+        "duplicate_retry",
+        "amount_unit"
+      ],
+      "expected": 2,
+      "detected": 2,
+      "schema_blocked": true,
+      "reconciliation_blocked": true,
+      "passed": true
+    },
+    {
+      "seed": 91,
+      "faults": [
+        "missing_region",
+        "duplicate_retry",
+        "amount_unit"
+      ],
+      "expected": 6,
+      "detected": 6,
+      "schema_blocked": true,
+      "reconciliation_blocked": true,
+      "passed": true
+    }
+  ],
+  "passed": 24,
+  "total": 24,
+  "comparison": {
+    "broken_deliveries": 21,
+    "schema_detected": 12,
+    "reconciliation_detected": 21,
+    "healthy_deliveries": 3,
+    "healthy_flagged": 0
+  }
+}

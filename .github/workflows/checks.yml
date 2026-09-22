@@ -27,3 +27,4 @@ jobs:
       - run: node --check dist/timeline.js
       - run: node tests/test_timeline.js
       - run: node --check dist/pipelines.js
+      - run: node --check dist/incidents.js

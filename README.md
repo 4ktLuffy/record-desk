@@ -6,6 +6,24 @@ Turn messy business files into checked, traceable records.
 
 A local data-quality and reconciliation workspace. Compare spreadsheet exports, investigate daily inventory, check order delivery commitments, and preserve a trail back to the original values. No account or credentials are needed for the CSV workflow.
 
+## Start with an incident
+
+![Illustrated incident replay: delivery, evidence and verified candidate](docs/incident-replay.svg)
+
+**Revenue says $976. The trusted ledger says $1,476. Where did the $500 go?**
+
+The new **Incident replay** lets you introduce a missing region, duplicate payment or amount-unit error, trace the affected metric to exact source records, and test a repair in an isolated candidate. A file can pass its schema checks and still be wrong. Partial repairs remain untrusted; originals are preserved.
+
+```text
+Break a delivery → Follow the metric → Inspect records → Test a candidate
+                         ↓                                  ↓
+                  Source fingerprints                Revalidate + reconcile
+```
+
+**[Follow the 60-second walkthrough →](docs/INCIDENT_REPLAY.md)**
+
+No account, API key or model call. The replay is explicitly synthetic and uses the real pipeline validator. Downloadable evidence includes CSV sources, hashes, calculations and before/after changes. Its [24-case fixture evaluation](docs/incident-evaluation.json) is reproducible; it is not a production accuracy claim.
+
 ## Quick start
 
 Requires Python 3.9 or newer. No pip packages or frontend build required.
@@ -18,7 +36,9 @@ python3 server.py
 
 On Windows use `python server.py`. Open http://127.0.0.1:8765. To choose a different port: `python3 server.py --port 8766`.
 
-Click **Try inventory demo**, then **Compare datasets**. The two synthetic exports deliberately contain a quantity conflict, duplicate product keys, a spaced product code, and products present on only one side. No private data is included.
+For the flagship walkthrough, click **Replay delivery** in **Incident replay**. Follow the impact, evidence and repair steps.
+
+For a simpler CSV comparison, click **Try inventory demo**, then **Compare datasets**. The two synthetic exports deliberately contain a quantity conflict, duplicate product keys, a spaced product code, and products present on only one side. No private data is included.
 
 1. Inspect the summary and filter duplicate keys or conflicts.
 2. Choose **Preview left-side whitespace cleanup**.
